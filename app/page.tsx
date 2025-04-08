@@ -72,10 +72,10 @@ const Home = () => {
     }, {} as Record<string, number>);
     
     const flavorsList = Object.entries(flavorCounts)
-      .map(([flavor, count]) => `${flavor}${count > 1 ? ` (${count}x)` : ''}`)
-      .join(', ');
+      .map(([flavor, count]) => `(${count}x)  ${flavor}`)
+      .join('\n');
     
-    const message = `Olá quero fazer meu pedido com ${option?.name} (${quantity} mini donuts) e os seguintes sabores: ${flavorsList}`;
+    const message = `Olá quero fazer meu pedido com\n\n${option?.name} (${quantity} mini donuts) e os seguintes sabores:\n${flavorsList}`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
     window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
