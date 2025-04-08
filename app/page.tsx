@@ -1,101 +1,143 @@
-import Image from "next/image";
+// pages/index.js
+"use client"
 
-export default function Home() {
+import { useState } from 'react';
+import { Package } from './lib/types';
+import { PackageSelection } from './components/PackageSelection';
+import { FlavorSelection } from './components/FlavorSelection';
+import { OrderSummary } from './components/OrderSummary';
+
+const Home = () => {
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
+  const [customQuantity, setCustomQuantity] = useState<number>(1);
+  const [showSummary, setShowSummary] = useState(false);
+
+  const options: Package[] = [
+    { 
+      id: 1, 
+      name: 'Copo - 200ml', 
+      description: '6 mini donuts da sua escolha', 
+      quantity: 6,
+      imageUrl: 'https://s3.typebot.io/public/workspaces/clwxpxmaa000th1axanj90oog/typebots/cm8xrw4kq001jw9lfm8rznbi6/blocks/zne0msp0lqxjmwfvytjxermk/items/zne0msp0lqxjmwfvytjxermk'
+    },
+    { 
+      id: 2, 
+      name: 'Caixa G', 
+      description: '8 mini donuts da sua escolha', 
+      quantity: 8,
+      imageUrl: 'https://s3.typebot.io/public/workspaces/clwxpxmaa000th1axanj90oog/typebots/cm8xrw4kq001jw9lfm8rznbi6/blocks/uyigyahfnfkny7hbdqefdhi2/items/uyigyahfnfkny7hbdqefdhi2'
+    },
+    { 
+      id: 3, 
+      name: 'Caixa M', 
+      description: '4 mini donuts da sua escolha', 
+      quantity: 4,
+      imageUrl: 'https://s3.typebot.io/public/workspaces/clwxpxmaa000th1axanj90oog/typebots/cm8xrw4kq001jw9lfm8rznbi6/blocks/w1sll6al0wtz4inh8x2hpdww/items/w1sll6al0wtz4inh8x2hpdww'
+    },
+    { 
+      id: 4, 
+      name: 'Pedido customizado', 
+      description: 'Escolha a quantidade de donuts', 
+      quantity: null,
+      imageUrl: 'https://s3.typebot.io/public/workspaces/clwxpxmaa000th1axanj90oog/typebots/cm8xrw4kq001jw9lfm8rznbi6/blocks/w5yvj7cac569680wyqr9ffao/items/w5yvj7cac569680wyqr9ffao'
+    },
+  ];
+
+  const flavors = [
+    'Homer',
+    'Prestigio',
+    'Paçoca',
+    'Brigadeiro',
+    'Chocoball',
+    'Kit Kat',
+    'Ovomaltine',
+    'Oreo',
+    'M&M\'s',
+    'Ninho com Nutella',
+  ];
+
+  const getCurrentQuantity = () => {
+    const option = options.find(opt => opt.id === selectedOption);
+    return option?.id === 4 ? customQuantity : option?.quantity || 0;
+  };
+
+  const handleSendToWhatsApp = () => {
+    const option = options.find(opt => opt.id === selectedOption);
+    const quantity = option?.id === 4 ? customQuantity : option?.quantity;
+    
+    const flavorCounts = selectedFlavors.reduce((acc, flavor) => {
+      acc[flavor] = (acc[flavor] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const flavorsList = Object.entries(flavorCounts)
+      .map(([flavor, count]) => `${flavor}${count > 1 ? ` (${count}x)` : ''}`)
+      .join(', ');
+    
+    const message = `Olá quero fazer meu pedido com ${option?.name} (${quantity} mini donuts) e os seguintes sabores: ${flavorsList}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
+  };
+
+  const handleBack = () => {
+    setSelectedOption(null);
+    setSelectedFlavors([]);
+    setCustomQuantity(1);
+    setShowSummary(false);
+  };
+
+  const handleFlavorSelect = (flavor: string) => {
+    if (selectedFlavors.length < getCurrentQuantity()) {
+      setSelectedFlavors([...selectedFlavors, flavor]);
+    }
+  };
+
+  const handleFlavorRemove = (flavor: string) => {
+    const index = selectedFlavors.lastIndexOf(flavor);
+    if (index !== -1) {
+      setSelectedFlavors([
+        ...selectedFlavors.slice(0, index),
+        ...selectedFlavors.slice(index + 1)
+      ]);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl m-auto px-4">
+      {!selectedOption ? (
+        <PackageSelection
+          options={options}
+          onSelect={setSelectedOption}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : !showSummary ? (
+        <FlavorSelection
+          selectedOption={selectedOption}
+          optionName={options.find(opt => opt.id === selectedOption)?.name || ''}
+          flavors={flavors}
+          selectedFlavors={selectedFlavors}
+          maxQuantity={getCurrentQuantity()}
+          customQuantity={customQuantity}
+          onCustomQuantityChange={setCustomQuantity}
+          onFlavorSelect={handleFlavorSelect}
+          onFlavorRemove={handleFlavorRemove}
+          onBack={handleBack}
+          onComplete={() => setShowSummary(true)}
+        />
+      ) : (
+        <OrderSummary
+          optionName={options.find(opt => opt.id === selectedOption)?.name || ''}
+          quantity={getCurrentQuantity()}
+          selectedFlavors={selectedFlavors}
+          onSendToWhatsApp={handleSendToWhatsApp}
+          onBack={() => setShowSummary(false)}
+        />
+      )}
+      </div>
     </div>
   );
-}
+};
+
+export default Home;
